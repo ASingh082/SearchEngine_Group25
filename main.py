@@ -34,7 +34,7 @@ def create_inverted_index():
             doc_num_to_url[doc_number] = json_data['url']
             doc_number += 1
     end = time.time()
-    output_deliverables(doc_number, unique_tokens, inverted_index, inverted_index_bold, end - start)
+    output_deliverables(end - start)
 
 
 def create_important_index(soup):
@@ -65,13 +65,13 @@ def create_text_index(soup):
         inverted_index[token][doc_number] += 1
 
 
-def output_deliverables(doc_number, unique_tokens, inverted_index, inverted_index_bold, time_elapsed):
+def output_deliverables(time_elapsed):
     print('NUMBER OF INDEXED DOCUMENTS: ', doc_number)
     print('NUMBER OF UNIQUE TOKENS: ', len(unique_tokens))
-    inv_idx_file = open('inverted_index.txt', 'w', encoding='utf-8')
-    inv_idx_file.write(str(inverted_index) + '\n' + '\n')
-    inv_idx_file.write(str(inverted_index_bold))
-    inv_idx_file.close()
+    with open('inverted_index.txt', 'w', encoding='utf-8') as inv_idx_file:
+        inv_idx_file.write(str(inverted_index))
+    with open('important_idx.txt', 'w', encoding='utf-8') as imp_inv_idx_file:
+        imp_inv_idx_file.write(str(inverted_index_bold))
     print('TIME ELAPSED: ', time_elapsed)
 
 

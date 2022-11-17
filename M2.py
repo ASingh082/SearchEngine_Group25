@@ -1,13 +1,19 @@
 from nltk import word_tokenize
 from nltk.stem.snowball import SnowballStemmer
 import time
+import json
 #temporary until json completes
 
 start = time.time()
 snowball = SnowballStemmer(language="english")
-inverted_index_file = open('inverted_index.txt', 'r', encoding='utf-8')
-inverted_index = eval(inverted_index_file.read())
+inverted_index_file = open('inverted_index.json', 'r', encoding='utf-8')
+inverted_index = json.load(inverted_index_file)
+inverted_index_file.close()
+urls_file = open('urls.json', 'r', encoding='utf-8')
+urls = json.load(urls_file)
+urls_file.close()
 end = time.time()
+
 print("Time elapsed: ", end - start)
 
 
@@ -37,6 +43,7 @@ def intersect(p1, p2):
 if __name__ == '__main__':
     ui = ask_user_input()
     while len(ui) > 1:
+        start = time.time()
         idx = 0
         postings = {}
         print(ui)
@@ -50,4 +57,12 @@ if __name__ == '__main__':
             idx += 1
         postings = {k: v for k, v in sorted(postings.items(), key=lambda item: -item[1])}
         print(postings)
+        url_num = 0
+        for k in postings:
+            print(urls[k])
+            if url_num > 4:
+                break
+            url_num += 1
+        end = time.time()
+        print(end - start)
         ui = ask_user_input()

@@ -87,6 +87,8 @@ def output_deliverables(time_elapsed):
         json.dump(inverted_index, inv_idx_file)
     with open('important_index.json', 'w', encoding='utf-8') as imp_inv_idx_file:
         json.dump(inverted_index_bold, imp_inv_idx_file)
+    with open('urls.json', 'w', encoding='utf-8') as urls:
+        json.dump(doc_num_to_url, urls)
     print('TIME ELAPSED: ', time_elapsed)
 
 

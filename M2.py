@@ -5,7 +5,7 @@ import time
 
 start = time.time()
 snowball = SnowballStemmer(language="english")
-inverted_index_file = open('important_idx.txt', 'r', encoding='utf-8')
+inverted_index_file = open('inverted_index.txt', 'r', encoding='utf-8')
 inverted_index = eval(inverted_index_file.read())
 end = time.time()
 print("Time elapsed: ", end - start)
@@ -30,13 +30,24 @@ def intersect(p1, p2):
     for k, v in p1_postings.items():
         if k in p2_postings:
             similar_postings[k] = v + p2_postings[k]
-    return {k: v for k, v in sorted(similar_postings.items(), key=lambda item: -item[1])}
+    return similar_postings
+    #{k: v for k, v in sorted(similar_postings.items(), key=lambda item: -item[1])}
 
 
 if __name__ == '__main__':
     ui = ask_user_input()
-    while ui:
+    while len(ui) > 1:
+        idx = 0
+        postings = {}
         print(ui)
-        postings = intersect(ui[0], ui[1])
+        while idx + 1 < len(ui):
+            temp_postings = intersect(ui[idx], ui[idx + 1])
+            for posting, frequency in temp_postings.items():
+                if posting not in postings:
+                    postings[posting] = frequency
+                else:
+                    postings[posting] += frequency
+            idx += 1
+        postings = {k: v for k, v in sorted(postings.items(), key=lambda item: -item[1])}
         print(postings)
         ui = ask_user_input()

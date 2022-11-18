@@ -25,6 +25,9 @@ def ask_user_input():
 # Rankings are currently based on frequency, tf-idf scoring will be implemented later
 def intersect(p1, p2):
     global inverted_index
+    if p1 == p2:
+        if p1 in inverted_index:
+            return inverted_index[p1]
     similar_postings = {}
     p1_postings = {}
     p2_postings = {}
@@ -40,11 +43,13 @@ def intersect(p1, p2):
 
 if __name__ == '__main__':
     ui = ask_user_input()
-    while len(ui) > 1:
+    while len(ui) > 0:
         start = time.time()
         idx = 0
         postings = {}
         print(ui)
+        if len(ui) == 1:
+            postings = intersect(ui[0], ui[0])
         while idx + 1 < len(ui):
             temp_postings = intersect(ui[idx], ui[idx + 1])
             for posting, frequency in temp_postings.items():
@@ -54,7 +59,6 @@ if __name__ == '__main__':
                     postings[posting] += frequency
             idx += 1
         postings = {k: v for k, v in sorted(postings.items(), key=lambda item: -item[1])}
-        print(postings)
         url_num = 0
         for k in postings:
             print(urls[k])

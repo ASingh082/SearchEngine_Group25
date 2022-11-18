@@ -13,7 +13,6 @@ urls_file = open('urls.json', 'r', encoding='utf-8')
 urls = json.load(urls_file)
 urls_file.close()
 end = time.time()
-
 print("Time elapsed: ", end - start)
 
 
@@ -23,7 +22,7 @@ def ask_user_input():
     return [snowball.stem(t) for t in user_input]
 
 
-#Rankings are currently based on frequency, tf-idf scoring will be implemented later
+# Rankings are currently based on frequency, tf-idf scoring will be implemented later
 def intersect(p1, p2):
     global inverted_index
     similar_postings = {}
@@ -37,7 +36,6 @@ def intersect(p1, p2):
         if k in p2_postings:
             similar_postings[k] = v + p2_postings[k]
     return similar_postings
-    #{k: v for k, v in sorted(similar_postings.items(), key=lambda item: -item[1])}
 
 
 if __name__ == '__main__':

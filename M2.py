@@ -2,7 +2,7 @@ from nltk import word_tokenize
 from nltk.stem.snowball import SnowballStemmer
 import time
 import json
-#temporary until json completes
+# temporary until json completes
 
 start = time.time()
 snowball = SnowballStemmer(language="english")

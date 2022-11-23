@@ -40,7 +40,6 @@ def create_inverted_index():
                 inverted_index = {}
                 partial_index_number += 1
             doc_number += 1
-            break
     end = time.time()
     #output_deliverables(end - start)
 

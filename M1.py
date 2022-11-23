@@ -11,6 +11,8 @@ doc_num_to_url = {}
 unique_tokens = set()
 snowball = SnowballStemmer(language="english")
 doc_number = 1
+partial_index_number = 1
+doc_pointers = []
 
 
 def create_inverted_index():
@@ -20,6 +22,7 @@ def create_inverted_index():
     global unique_tokens
     global snowball
     global doc_number
+    global partial_index_number
     start = time.time()
     path = os.getcwd()
     path += '\DEV'
@@ -32,30 +35,35 @@ def create_inverted_index():
             len_imp = create_important_index(soup)
             create_text_index(soup, len_imp)
             doc_num_to_url[doc_number] = json_data['url']
+            if len(inverted_index) > 500000:
+                offload_index()
+                inverted_index = {}
+                partial_index_number += 1
             doc_number += 1
+            break
     end = time.time()
-    output_deliverables(end - start)
+    #output_deliverables(end - start)
 
 
 def create_important_index(soup):
     length_imp = 0
     stemmed_list = set()
-    for imp in soup.find_all(['b', 'strong', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+    for imp in soup.find_all(['b', 'strong', 'h1', 'h2', 'h3', 'title']):
         imp_tokens = [i for i in word_tokenize(imp.get_text())]
         length_imp += len(imp_tokens)
         for token in imp_tokens:
             stemmed = snowball.stem(token)
             stemmed_list.add(stemmed)
             unique_tokens.add(stemmed)
-            if stemmed not in inverted_index_bold:
-                inverted_index_bold[stemmed] = {}
-            if doc_number not in inverted_index_bold[stemmed]:
-                inverted_index_bold[stemmed][doc_number] = 0
-            inverted_index_bold[stemmed][doc_number] += 1
+            if stemmed not in inverted_index:
+                inverted_index[stemmed] = {}
+            if doc_number not in inverted_index[stemmed]:
+                inverted_index[stemmed][doc_number] = 0
+            inverted_index[stemmed][doc_number] += 3
     for data in soup(['style', 'script', '[document]', 'head', 'title', 'strong',
                       'b', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
         data.extract()
-    tokens = [t for t in word_tokenize(soup.get_text())]
+    #tokens = [t for t in word_tokenize(soup.get_text())]
     #for stemmed in stemmed_list:
     #    inverted_index_bold[stemmed][doc_number] /= len(tokens) + length_imp
     return length_imp
@@ -64,7 +72,7 @@ def create_important_index(soup):
 def create_text_index(soup, len_imp):
     stemmed_list = set()
     for data in soup(['style', 'script', '[document]', 'head', 'title', 'strong',
-                      'b', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+                      'b', 'h1', 'h2', 'h3']):
         data.extract()
     tokens = [t for t in word_tokenize(soup.get_text())]
     for t in tokens:
@@ -78,6 +86,11 @@ def create_text_index(soup, len_imp):
         inverted_index[token][doc_number] += 1
     #for stemmed in stemmed_list:
     #    inverted_index[stemmed][doc_number] /= len(tokens) + len_imp
+
+
+def offload_index():
+    with open(f'inverted_index{partial_index_number}.json', 'w', encoding='utf-8') as partial_index_file:
+        json.dump(inverted_index, partial_index_file)
 
 
 def output_deliverables(time_elapsed):

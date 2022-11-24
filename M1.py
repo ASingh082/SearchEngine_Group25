@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 from bs4 import BeautifulSoup
 from nltk import word_tokenize
 from nltk.stem.snowball import SnowballStemmer
@@ -35,11 +36,14 @@ def create_inverted_index():
             len_imp = create_important_index(soup)
             create_text_index(soup, len_imp)
             doc_num_to_url[doc_number] = json_data['url']
+            print(len(inverted_index))
             if len(inverted_index) > 500000:
                 offload_index()
                 inverted_index = {}
                 partial_index_number += 1
+                print("Created Partial Index " + str(partial_index_number - 1))
             doc_number += 1
+    offload_index()
     end = time.time()
     #output_deliverables(end - start)
 
@@ -88,7 +92,7 @@ def create_text_index(soup, len_imp):
 
 
 def offload_index():
-    with open(f'inverted_index{partial_index_number}.json', 'w', encoding='utf-8') as partial_index_file:
+    with open(f'partial_index{partial_index_number}.json', 'w', encoding='utf-8') as partial_index_file:
         json.dump(inverted_index, partial_index_file)
 
 

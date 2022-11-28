@@ -2,3 +2,6 @@
 important_idx.txt
 inverted_index.txt
 *.json
+*.csv
+.idea/csv-plugin.xml
+.idea/csv-plugin.xml

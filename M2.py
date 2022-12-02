@@ -43,6 +43,15 @@ class SearchComponent:
                     doc_weight = 1 + log(tf)
                     if doc not in scores:
                         scores[doc] = 0
+                    # experimental
+                    split_url = self.urls[doc][8:].split('/', 1)
+                    if len(split_url) > 1 and self.urls[doc][8:].split('/', 1)[1] == '':
+                        if term in ''.join([self.snowball.stem(t) for t in word_tokenize(self.urls[doc])])\
+                                and term != 'uci':
+                            scores[doc] += 5
+                    else:
+                        if len(split_url) > 1 and term in split_url[1]:
+                            scores[doc] += 3
                     scores[doc] += query_weight * doc_weight
             except KeyError:
                 print("Term was not found in index")
@@ -50,10 +59,6 @@ class SearchComponent:
             scores[doc] /= self.doc_lengths[doc]
         return [doc for doc, _ in sorted(scores.items(), key=lambda item: -item[1])
                 if self.doc_lengths[doc] > 35][:10]
-        # http://ics.uci.edu/
-        # ics
-        # http://informatics
-        # http://grape.ics.uci.edu/
 
     def print_urls(self, doc_scores):
         for doc in doc_scores:
@@ -88,37 +93,6 @@ def main():
     doc_length_file.close()
 
 
-
-
 if __name__ == '__main__':
     main()
-    #cosine_score(ui, index_file)
 
-    '''
-    ui = ask_user_input()
-    while len(ui) > 0:
-        start = time.time()
-        idx = 0
-        postings = {}
-        print(ui)
-        if len(ui) == 1:
-            postings = intersect(ui[0], ui[0])
-        while idx + 1 < len(ui):
-            temp_postings = intersect(ui[idx], ui[idx + 1])
-            for posting, frequency in temp_postings.items():
-                if posting not in postings:
-                    postings[posting] = frequency
-                else:
-                    postings[posting] += frequency
-            idx += 1
-        postings = {k: v for k, v in sorted(postings.items(), key=lambda item: -item[1])}
-        url_num = 0
-        for k in postings:
-            print(urls[k])
-            if url_num > 4:
-                break
-            url_num += 1
-        end = time.time()
-        print(end - start)
-        ui = ask_user_input()
-        '''

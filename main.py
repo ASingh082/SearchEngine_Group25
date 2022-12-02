@@ -1,10 +1,10 @@
-import M1
+from M1 import InvertedIndex
 from MergeIndexes import merge_indexes
 from CalculateIDF import calculate_idf_and_final_merge
 
-
 def main():
-    M1.create_inverted_index()
+    inverted_index_creator = InvertedIndex()
+    inverted_index_creator.create_inverted_index()
     merge_indexes()
     calculate_idf_and_final_merge()
 

@@ -3,87 +3,99 @@ import json
 from bs4 import BeautifulSoup
 from nltk import word_tokenize
 from nltk.stem.snowball import SnowballStemmer
-
-inverted_index = {}
-inverted_index_bold = {}
-doc_num_to_url = {}
-unique_tokens = set()
-snowball = SnowballStemmer(language="english")
-doc_number = 1
-partial_index_number = 1
+from math import sqrt
+import time
 
 
-def create_inverted_index():
-    global inverted_index
-    global inverted_index_bold
-    global doc_num_to_url
-    global unique_tokens
-    global snowball
-    global doc_number
-    global partial_index_number
-    path = os.getcwd()
-    path += '\\DEV'
-    for subdir, dirs, files in os.walk(path):
-        for file in files:
-            print(os.path.join(subdir, file))
-            current_file = open(os.path.join(subdir, file))
-            json_data = json.load(current_file)
-            soup = BeautifulSoup(json_data['content'], 'lxml')
-            len_imp = create_important_index(soup)
-            create_text_index(soup, len_imp)
-            doc_num_to_url[doc_number] = json_data['url']
-            if len(inverted_index) >= 500000:
-                offload_index()
-                inverted_index = {}
-                partial_index_number += 1
-            doc_number += 1
-    offload_index()
-    with open('urls.json', 'w', encoding='utf-8') as urls:
-        json.dump(doc_num_to_url, urls)
+class InvertedIndex:
+    def __init__(self):
+        self.inverted_index = {}
+        self.inverted_index_bold = {}
+        self.doc_num_to_url = {}
+        self.doc_lengths = {}
+        self.current_doc_index = {}
+        self.unique_tokens = set()
+        self.snowball = SnowballStemmer(language="english")
+        self.doc_number = 1
+        self.partial_index_number = 1
 
+    def create_inverted_index(self):
+        path = os.getcwd()
+        path += '\\DEV'
+        for subdir, dirs, files in os.walk(path):
+            for file in files:
+                print(os.path.join(subdir, file))
+                current_file = open(os.path.join(subdir, file))
+                json_data = json.load(current_file)
+                soup = BeautifulSoup(json_data['content'], 'lxml')
+                self.index_important_words(soup)
+                self.index_regular_words(soup)
+                self.calculate_doc_length()
+                self.doc_num_to_url[self.doc_number] = json_data['url']
+                if len(self.inverted_index) >= 500000:
+                    self.offload_index()
+                self.doc_number += 1
+        self.offload_index()
+        with open('urls.json', 'w', encoding='utf-8') as urls_file:
+            json.dump(self.doc_num_to_url, urls_file)
+        with open('document_lengths.json', 'w', encoding='utf-8') as doc_lengths_file:
+            json.dump(self.doc_lengths, doc_lengths_file)
 
-def create_important_index(soup):
-    length_imp = 0
-    stemmed_list = set()
-    for imp in soup.find_all(['b', 'strong', 'h1', 'h2', 'h3', 'title']):
-        imp_tokens = [i for i in word_tokenize(imp.get_text())]
-        length_imp += len(imp_tokens)
-        for token in imp_tokens:
-            stemmed = snowball.stem(token)
+    def index_important_words(self, soup):
+        stemmed_list = set()
+        for imp in soup.find_all(['b', 'strong', 'h1', 'h2', 'h3', 'title']):
+            imp_tokens = [i for i in word_tokenize(imp.get_text())]
+            for token in imp_tokens:
+                stemmed = self.snowball.stem(token)
+                stemmed_list.add(stemmed)
+                self.unique_tokens.add(stemmed)
+                if stemmed not in self.current_doc_index:
+                    self.current_doc_index[stemmed] = 0
+                self.current_doc_index[stemmed] += 1
+                if stemmed == 'artifici':
+                    print('artifici')
+                if stemmed not in self.inverted_index:
+                    self.inverted_index[stemmed] = {}
+                if self.doc_number not in self.inverted_index[stemmed]:
+                    self.inverted_index[stemmed][self.doc_number] = 0
+                self.inverted_index[stemmed][self.doc_number] += 2
+
+    def index_regular_words(self, soup):
+        stemmed_list = set()
+        for data in soup(['style', 'script', '[document]', 'head', 'title', 'strong',
+                          'b', 'h1', 'h2', 'h3']):
+            data.extract()
+        tokens = [t for t in word_tokenize(soup.get_text())]
+        for t in tokens:
+            stemmed = self.snowball.stem(t)
+            self.unique_tokens.add(stemmed)
             stemmed_list.add(stemmed)
-            unique_tokens.add(stemmed)
-            if stemmed not in inverted_index:
-                inverted_index[stemmed] = {}
-            if doc_number not in inverted_index[stemmed]:
-                inverted_index[stemmed][doc_number] = 0
-            inverted_index[stemmed][doc_number] += 2
-    return length_imp
+            if stemmed not in self.current_doc_index:
+                self.current_doc_index[stemmed] = 0
+            self.current_doc_index[stemmed] += 1
+            if stemmed not in self.inverted_index:
+                self.inverted_index[stemmed] = {}
+            if self.doc_number not in self.inverted_index[stemmed]:
+                self.inverted_index[stemmed][self.doc_number] = 0
+            self.inverted_index[stemmed][self.doc_number] += 1
+        # doc_lengths[doc_number] = len_imp + len(tokens)
 
+    def calculate_doc_length(self):
+        normalized_length = 0
+        print(self.current_doc_index)
+        for term in self.current_doc_index:
+            normalized_length += self.current_doc_index[term] ** 2
+        self.doc_lengths[self.doc_number] = sqrt(normalized_length)
+        self.current_doc_index.clear()
+        print(self.doc_number, self.doc_lengths[self.doc_number])
 
-def create_text_index(soup, len_imp):
-    stemmed_list = set()
-    for data in soup(['style', 'script', '[document]', 'head', 'title', 'strong',
-                      'b', 'h1', 'h2', 'h3']):
-        data.extract()
-    tokens = [t for t in word_tokenize(soup.get_text())]
-    for t in tokens:
-        token = snowball.stem(t)
-        unique_tokens.add(token)
-        stemmed_list.add(token)
-        if token not in inverted_index:
-            inverted_index[token] = {}  # doc_number : count
-        if doc_number not in inverted_index[token]:
-            inverted_index[token][doc_number] = 0
-        inverted_index[token][doc_number] += 1
-    for stemmed in stemmed_list:
-        inverted_index[stemmed][doc_number] /= len(tokens) + len_imp
+    def offload_index(self):
+        with open(f'partial_index{self.partial_index_number}.json', 'w', encoding='utf-8') as partial_index_file:
+            json.dump(self.inverted_index, partial_index_file)
+        self.inverted_index.clear()
+        self.partial_index_number += 1
 
-
-def offload_index():
-    with open(f'partial_index{partial_index_number}.json', 'w', encoding='utf-8') as partial_index_file:
-        json.dump(inverted_index, partial_index_file)
-
-
+'''
 def output_deliverables(time_elapsed):
     print('NUMBER OF INDEXED DOCUMENTS: ', doc_number)
     print('NUMBER OF UNIQUE TOKENS: ', len(unique_tokens))
@@ -92,3 +104,4 @@ def output_deliverables(time_elapsed):
     with open('important_index.json', 'w', encoding='utf-8') as imp_inv_idx_file:
         json.dump(inverted_index_bold, imp_inv_idx_file)
     print('TIME ELAPSED: ', time_elapsed)
+'''

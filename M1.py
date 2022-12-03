@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 from nltk import word_tokenize
 from nltk.stem.snowball import SnowballStemmer
 from math import sqrt
-import time
 
 
 class InvertedIndex:
@@ -89,6 +88,7 @@ class InvertedIndex:
             json.dump(self.inverted_index, partial_index_file)
         self.inverted_index.clear()
         self.partial_index_number += 1
+
 
 '''
 def output_deliverables(time_elapsed):

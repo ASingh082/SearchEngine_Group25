@@ -52,8 +52,6 @@ class InvertedIndex:
                 if stemmed not in self.current_doc_index:
                     self.current_doc_index[stemmed] = 0
                 self.current_doc_index[stemmed] += 1
-                if stemmed == 'artifici':
-                    print('artifici')
                 if stemmed not in self.inverted_index:
                     self.inverted_index[stemmed] = {}
                 if self.doc_number not in self.inverted_index[stemmed]:
@@ -78,16 +76,13 @@ class InvertedIndex:
             if self.doc_number not in self.inverted_index[stemmed]:
                 self.inverted_index[stemmed][self.doc_number] = 0
             self.inverted_index[stemmed][self.doc_number] += 1
-        # doc_lengths[doc_number] = len_imp + len(tokens)
 
     def calculate_doc_length(self):
         normalized_length = 0
-        print(self.current_doc_index)
         for term in self.current_doc_index:
             normalized_length += self.current_doc_index[term] ** 2
         self.doc_lengths[self.doc_number] = sqrt(normalized_length)
         self.current_doc_index.clear()
-        print(self.doc_number, self.doc_lengths[self.doc_number])
 
     def offload_index(self):
         with open(f'partial_index{self.partial_index_number}.json', 'w', encoding='utf-8') as partial_index_file:
